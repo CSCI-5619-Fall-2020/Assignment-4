@@ -42,7 +42,7 @@ Graded out of 20 points.
 
 9. Make sure that when the user enters and exits immersive mode, all the physics objects pause and resume properly. (2)
 
-10. Add sound effects for the toggling the saber on and off, shooting a sphere, and destroying a cube.  You do not need to add a sound effect when cubes are destroyed in the background in step 8. (1)
+10. Add sound effects for the toggling the saber on and off, shooting a sphere, and destroying a cube.  You do not need to add a sound effect when cubes are destroyed in the background in step 6. (1)
 
 11. Add a particle effect whenever a cube is destroyed. (1)
 
