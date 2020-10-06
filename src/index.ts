@@ -169,12 +169,9 @@ class Game
         this.targetRoot = new TransformNode("targetRoot", this.scene);
         this.targetRoot.parent = this.sceneRoot;
 
-        var originCube = MeshBuilder.CreateBox("originCube", {width: .1, depth: 1}, this.scene);
-        originCube.parent = this.sceneRoot;
-
         // Create an example cube
         var exampleCube = MeshBuilder.CreateBox("exampleCube", {size: .1}, this.scene);
-        exampleCube.position = new Vector3(.5, 1.5, 10);
+        exampleCube.position = new Vector3(.5, 1.6, 10);
         exampleCube.parent = this.targetRoot;
         
         // Create a simple blue emissive material
