@@ -1,10 +1,10 @@
 # Assignment 4: Making Beat Saber in Babylon
 
-**Due: Monday, October 12, 10:00pm CDT**
+**Due: Monday, October 19, 10:00pm CDT**
 
 [Beat Saber](https://beatsaber.com/) is widely considered to be one of the best and most successful virtual reality games.  There is a free demo available for the Oculus Quest, which you can find in the official store app.  Before beginning this assignment, I suggest that you download this demo to familiarize yourself with the gameplay. 
 
-In this assignment, you will be implementing Beat Saber's core mechanics.  The template code includes a very simple scene with a single cube that flies towards the user.  You do not 
+In this assignment, you will be implementing Beat Saber's core mechanics.  The template code includes a very simple scene with an example music track and a single cube that flies towards the user.  You can use `MeshBuilder` for this assignment, and you do not need to import custom meshes.  If you want to make your game more interesting, you are also free to import additional assets, such as models, textures, or music. You can also modify any of the colors, textures, or lighting in the example scene. Creativity is encouraged!  However, note that your grade will be based on the interaction functionality, not the artistic quality of the scene.  
 
 ## Submission Information
 
@@ -22,16 +22,31 @@ Third Party Assets:
 
 Graded out of 20 points.  
 
-1. Add a saber sticking out of the top of the controller.
-2. Cube object disappears on contact with saber.  Use dispose.
-3. Sound effect and when the cube disappears.
-4. Random cube spawning every few seconds.  Try to time it to the beat.
-5. When you get more than 8 cubes in a scene, dispose of the oldest one.  No infinite cubes!
-6. Randomly spawn spheres.  If the user's head touches a sphere, the objects stop moving.
-7. If the user selects the sphere with the laser pointer, it will explode.  Particle effect.
-8. Change the cubes so that instead of disappearing, they will bounce away using physics.  Make sure they don't fall through the floor.
+1. Add a "saber" that is attached to the top of each controller.  It should be pointing directly straight up when you hold the controller upright, similar holding a sword.  You can use a box for the geometry, but it should have an interesting color or texture.  You do not need to make the controller model invisible, although you can replace it entirely if you want.  (2)  
 
-**Bonus Challenge:** Directionality to swing. (2)
+2. The user should be able to toggle a saber on or off whenever they press the grip (squeeze) button on the corresponding controller. Both sabers should be turned off initially.  (2)
+
+3. The cube should be destroyed upon contact with a saber.  Hint: you can use the `.dispose()` method to delete an object from the scene. (2)
+
+4. Spawn new cubes at regular time intervals.  The cubes should be initially placed 10 meters away and fly towards the user at the same speed as the example cube.  They should be placed at random XY positions so that they are reachable with the saber without requiring the user to walk around.  (2)
+
+   *Optionally, you can try to time the cube spawning to the beat of the music!  This part is just for fun, and is not part of the grade.*
+
+5. The sabers should be able to destroy any cube that they hit.  (2)
+
+6. Whenever a new cube is spawned and there are already 10 cubes present in the scene, destroy the oldest one. We don't want to create infinite cubes that will slow down the Oculus Quest! (2)
+
+7. Now, we are going to add some custom gameplay that is not in the original Beat Saber.  When the saber is toggled off, the user should be able to shoot a small sphere in the controller's forward direction by pressing the trigger button.  The trigger button should not do anything when the saber is toggled on. The spheres should have an interesting color or texture that is different from the cubes. (2)
+
+8. When a sphere collides with a cube, the sphere should be destroyed, and the cube should bounce off using physics. You can adjust the mass of the sphere to influence the force that gets applied during the collision. (2)
+
+9. Make sure that when the user enters and exits immersive mode, all the physics objects pause and resume properly. (2)
+
+10. Add sound effects for the toggling the saber on and off, shooting a sphere, and destroying a cube.  You do not need to add a sound effect when cubes are destroyed in the background in step 8. (1)
+
+11. Add a particle effect whenever a cube is destroyed. (1)
+
+**Bonus Challenge:** In the original game, cubes are only destroyed when the user swings a saber in a specific direction (up, down, left, or right). Implement this functionality in your game. Note that you will need to add a visual indicator to the cube that specifies the direction to hit. The direction should be randomly chosen when each cube spawns. (2)
 
 Make sure to document all third party assets. ***Be aware that points will be deducted for using third party assets that are not properly documented.***
 

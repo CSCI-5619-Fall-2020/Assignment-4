@@ -10,10 +10,15 @@ import { UniversalCamera } from "@babylonjs/core/Cameras/universalCamera";
 import { WebXRInputSource } from "@babylonjs/core/XR/webXRInputSource";
 import { WebXRCamera } from "@babylonjs/core/XR/webXRCamera";
 import { PointLight } from "@babylonjs/core/Lights/pointLight";
-import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import { Sound } from "@babylonjs/core/Audio/sound"
 import { AssetsManager } from "@babylonjs/core/Misc/assetsManager"
 import { Logger } from "@babylonjs/core/Misc/logger";
+
+// Physics
+import * as Cannon from "cannon"
+import { CannonJSPlugin } from "@babylonjs/core/Physics/Plugins/cannonJSPlugin";
+import { PhysicsImpostor } from "@babylonjs/core/Physics/physicsImpostor";
+import "@babylonjs/core/Physics/physicsEngineComponent";
 
 // MeshBuilder
 import {MeshBuilder} from  "@babylonjs/core/Meshes/meshBuilder";
@@ -25,13 +30,9 @@ import "@babylonjs/core/Helpers/sceneHelpers";
 
 // Import debug layer
 import "@babylonjs/inspector";
+import { Mesh } from "@babylonjs/core/Meshes/mesh";
 
-// Note: The structure has changed since previous assignments because we need to handle the 
-// async methods used for setting up XR. In particular, "createDefaultXRExperienceAsync" 
-// needs to load models and create various things.  So, the function returns a promise, 
-// which allows you to do other things while it runs.  Because we don't want to continue
-// executing until it finishes, we use "await" to wait for the promise to finish. However,
-// await can only run inside async functions. https://javascript.info/async-await
+/******* Start of the Game class ******/ 
 class Game 
 { 
     private canvas: HTMLCanvasElement;
@@ -42,12 +43,12 @@ class Game
     private leftController: WebXRInputSource | null;
     private rightController: WebXRInputSource | null;
 
-    private silence : Sound | null;
     private music : Sound | null;
 
+    private exampleCube: Mesh | null;
+
     private gameStarted: boolean;
-    private sceneRoot: TransformNode | null;
-    private targetRoot: TransformNode | null;
+    private gamePaused: boolean;
 
     constructor()
     {
@@ -64,12 +65,12 @@ class Game
         this.leftController = null;
         this.rightController = null;
 
-        this.silence = null;
         this.music = null;
 
         this.gameStarted = false;
-        this.sceneRoot = null;
-        this.targetRoot = null;
+        this.gamePaused = true;
+
+        this.exampleCube = null;
     }
 
     start() : void 
@@ -114,18 +115,15 @@ class Game
             skyboxColor: new Color3(0, 0, 0)
         });
 
-        // Creates the XR experience helper and disable teleportation
+        // Creates the XR experience helper
         const xrHelper = await this.scene.createDefaultXRExperienceAsync({});
+
+        // Disable teleportation and the laser pointer
         xrHelper.teleportation.dispose();
+        xrHelper.pointerSelection.dispose();
 
         // Assign the xrCamera to a member variable
         this.xrCamera = xrHelper.baseExperience.camera;
-
-        // Make sure the origin is set correctly
-        xrHelper.baseExperience.onInitialXRPoseSetObservable.add((camera) => {
-             this.sceneRoot!.position.x = camera.position.x;
-             this.sceneRoot!.position.z = camera.position.z;
-        });
 
         // This executes when the user enters or exits immersive mode
         xrHelper.enterExitUI.activeButtonChangedObservable.add((enterExit) => {
@@ -146,7 +144,7 @@ class Game
             {
                 // Pause the game and music upon exit
                 this.gameStarted = false;
-                this.music?.pause();
+                this.pause();
             }
         });
 
@@ -163,23 +161,21 @@ class Game
             }  
         });
 
-        this.sceneRoot = new TransformNode("sceneRoot", this.scene);
+        // Enable physics engine with no gravity
+        this.scene.enablePhysics(new Vector3(0, 0, 0), new CannonJSPlugin(undefined, undefined, Cannon));
 
-        // The target root will be used to move the objects all at once
-        this.targetRoot = new TransformNode("targetRoot", this.scene);
-        this.targetRoot.parent = this.sceneRoot;
-
-        // Create an example cube
-        var exampleCube = MeshBuilder.CreateBox("exampleCube", {size: .1}, this.scene);
-        exampleCube.position = new Vector3(.5, 1.6, 10);
-        exampleCube.parent = this.targetRoot;
+        // Create an example cube that flies towards the user
+        this.exampleCube = MeshBuilder.CreateBox("exampleCube", {size: .1}, this.scene);
+        this.exampleCube.position = new Vector3(.5, 1.6, 10);
+        this.exampleCube.physicsImpostor = new PhysicsImpostor(this.exampleCube, PhysicsImpostor.BoxImpostor, {mass: 1}, this.scene);
+        this.exampleCube.physicsImpostor.sleep();
         
         // Create a simple blue emissive material
         var blueMaterial = new StandardMaterial("blueMaterial", this.scene);
         blueMaterial.diffuseColor = new Color3(.284, .73, .831);
         blueMaterial.specularColor = Color3.Black();
         blueMaterial.emissiveColor = new Color3(.284, .73, .831);
-        exampleCube.material = blueMaterial;
+        this.exampleCube.material = blueMaterial;
 
         // The assets manager can be used to load multiple assets
         var assetsManager = new AssetsManager(this.scene);
@@ -188,7 +184,7 @@ class Game
         // This is necessary to get the unmute icon to appear at the beginning
         var silenceTask = assetsManager.addBinaryFileTask("silence task", "assets/audio/silence.wav");
         silenceTask.onSuccess = (task) => {
-            this.silence = new Sound("silence", task.data, this.scene, null, {
+            new Sound("silence", task.data, this.scene, null, {
                 loop: true,
                 autoplay: true
             });
@@ -218,16 +214,25 @@ class Game
     // The main update loop will be executed once per frame before the scene is rendered
     private update() : void
     {
-        // Make sure the game has started and music is playing
-        if(this.gameStarted && this.music?.isPlaying)
+        // Make sure the game has started and music is playing to unpause
+        if(this.gamePaused && this.gameStarted && this.music?.isPlaying)
         {
-            // The distance is the target speed multiplied by the
-            // time elapsed since the last frame update in seconds 
-            var targetMoveDistance = 2 * (this.engine.getDeltaTime() / 1000);
-
-            // Translate the target root by the calculated distance
-            this.targetRoot?.translate(Vector3.Backward(), targetMoveDistance);
+            this.resume();
         }
+    }
+
+    private resume() : void
+    {
+        this.gamePaused = false;
+        this.exampleCube?.physicsImpostor?.wakeUp();
+        this.exampleCube?.physicsImpostor?.setLinearVelocity(new Vector3(0, 0, -2));
+    }
+
+    private pause() : void
+    {
+        this.gamePaused = true;
+        this.music?.pause();
+        this.exampleCube?.physicsImpostor?.sleep();
     }
 
 }
