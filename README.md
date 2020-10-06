@@ -1,4 +1,4 @@
-# Assignment 4: Beat Saber Remix
+# Assignment 4: Making Beat Saber in Babylon
 
 **Due: Monday, October 12, 10:00pm CDT**
 
@@ -20,9 +20,16 @@ Third Party Assets:
 
 Graded out of 20 points.  
 
-1. To be added.
+1. Add a saber sticking out of the top of the controller.
+2. Cube object disappears on contact with saber.  Use dispose.
+3. Sound effect and when the cube disappears.
+4. Random cube spawning every few seconds.  Try to time it to the beat.
+5. When you get more than 8 cubes in a scene, dispose of the oldest one.  No infinite cubes!
+6. Randomly spawn spheres.  If the user's head touches a sphere, the objects stop moving.
+7. If the user selects the sphere with the laser pointer, it will explode.  Particle effect.
+8. Change the cubes so that instead of disappearing, they will bounce away using physics.  Make sure they don't fall through the floor.
 
-**Bonus Challenge:** To be added.
+**Bonus Challenge:** Directionality to swing. (2)
 
 Make sure to document all third party assets. ***Be aware that points will be deducted for using third party assets that are not properly documented.***
 
