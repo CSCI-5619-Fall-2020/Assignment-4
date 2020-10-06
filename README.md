@@ -2,7 +2,9 @@
 
 **Due: Monday, October 12, 10:00pm CDT**
 
-Description to be added.
+[Beat Saber](https://beatsaber.com/) is widely considered to be one of the best and most successful virtual reality games.  There is a free demo available for the Oculus Quest, which you can find in the official store app.  Before beginning this assignment, I suggest that you download this demo to familiarize yourself with the gameplay. 
+
+In this assignment, you will be implementing Beat Saber's core mechanics.  The template code includes a very simple scene with a single cube that flies towards the user.  You do not 
 
 ## Submission Information
 
@@ -82,7 +84,7 @@ The intent of choosing CC BY-NC-SA 4.0 is to allow individuals and instructors a
 
 ## Acknowledgments
 
-This assignment was based upon content from the [3D User Interfaces Fall 2020](https://github.blairmacintyre.me/3dui-class-f20) course by Blair MacIntyre.
+This assignment was partially based upon content from the [3D User Interfaces Fall 2020](https://github.blairmacintyre.me/3dui-class-f20) course by Blair MacIntyre and was inspired by the [Making Beat Saber in 10 Minutes](https://www.youtube.com/watch?v=gh4k0Q1Pl7E) video on YouTube.
 
-The example music was "Hyperspace - Lightyears Away" from the [Star Control 2 Music Remix Project](http://www.medievalfuture.com/precursors/music.php).
+The included example music is "Hyperspace - Lightyears Away" from the [Star Control 2 Music Remix Project](http://www.medievalfuture.com/precursors/music.php).
 

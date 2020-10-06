@@ -12,7 +12,8 @@ import { WebXRCamera } from "@babylonjs/core/XR/webXRCamera";
 import { PointLight } from "@babylonjs/core/Lights/pointLight";
 import { TransformNode } from "@babylonjs/core/Meshes/transformNode";
 import { Sound } from "@babylonjs/core/Audio/sound"
-import { Logger } from "@babylonjs/core";
+import { AssetsManager } from "@babylonjs/core/Misc/assetsManager"
+import { Logger } from "@babylonjs/core/Misc/logger";
 
 // MeshBuilder
 import {MeshBuilder} from  "@babylonjs/core/Meshes/meshBuilder";
@@ -41,6 +42,11 @@ class Game
     private leftController: WebXRInputSource | null;
     private rightController: WebXRInputSource | null;
 
+    private silence : Sound | null;
+    private music : Sound | null;
+
+    private gameStarted: boolean;
+    private sceneRoot: TransformNode | null;
     private targetRoot: TransformNode | null;
 
     constructor()
@@ -58,6 +64,11 @@ class Game
         this.leftController = null;
         this.rightController = null;
 
+        this.silence = null;
+        this.music = null;
+
+        this.gameStarted = false;
+        this.sceneRoot = null;
         this.targetRoot = null;
     }
 
@@ -103,11 +114,43 @@ class Game
             skyboxColor: new Color3(0, 0, 0)
         });
 
-        // Creates the XR experience helper
+        // Creates the XR experience helper and disable teleportation
         const xrHelper = await this.scene.createDefaultXRExperienceAsync({});
+        xrHelper.teleportation.dispose();
 
-        // Assigns the web XR camera and controllers to member variables
+        // Assign the xrCamera to a member variable
         this.xrCamera = xrHelper.baseExperience.camera;
+
+        // Make sure the origin is set correctly
+        xrHelper.baseExperience.onInitialXRPoseSetObservable.add((camera) => {
+             this.sceneRoot!.position.x = camera.position.x;
+             this.sceneRoot!.position.z = camera.position.z;
+        });
+
+        // This executes when the user enters or exits immersive mode
+        xrHelper.enterExitUI.activeButtonChangedObservable.add((enterExit) => {
+            if(enterExit)
+            {
+                // Start the game only in immersive mode
+                this.gameStarted = true;
+
+                // Need to set both play and autoplay depending on
+                // whether the music has finished loading or not
+                if(this.music)
+                {
+                    this.music.autoplay = true;
+                    this.music.play();
+                }            
+            }
+            else
+            {
+                // Pause the game and music upon exit
+                this.gameStarted = false;
+                this.music?.pause();
+            }
+        });
+
+        // Assigns the controllers
         xrHelper.input.onControllerAddedObservable.add((inputSource) =>
         {
             if(inputSource.uniqueId.endsWith("left")) 
@@ -120,8 +163,14 @@ class Game
             }  
         });
 
+        this.sceneRoot = new TransformNode("sceneRoot", this.scene);
+
         // The target root will be used to move the objects all at once
         this.targetRoot = new TransformNode("targetRoot", this.scene);
+        this.targetRoot.parent = this.sceneRoot;
+
+        var originCube = MeshBuilder.CreateBox("originCube", {width: .1, depth: 1}, this.scene);
+        originCube.parent = this.sceneRoot;
 
         // Create an example cube
         var exampleCube = MeshBuilder.CreateBox("exampleCube", {size: .1}, this.scene);
@@ -135,25 +184,55 @@ class Game
         blueMaterial.emissiveColor = new Color3(.284, .73, .831);
         exampleCube.material = blueMaterial;
 
-        // Set autoplay to true for a fun soundtrack
-        var music = new Sound("music", "assets/music/hyperspace.mp3", this.scene, null, {
-            loop: false,
-            autoplay: false
-        });
+        // The assets manager can be used to load multiple assets
+        var assetsManager = new AssetsManager(this.scene);
 
-        this.scene.debugLayer.show();
+        // Load a silent audio track
+        // This is necessary to get the unmute icon to appear at the beginning
+        var silenceTask = assetsManager.addBinaryFileTask("silence task", "assets/audio/silence.wav");
+        silenceTask.onSuccess = (task) => {
+            this.silence = new Sound("silence", task.data, this.scene, null, {
+                loop: true,
+                autoplay: true
+            });
+        }
+
+        // Feel free to add your own custom music track
+        var musicTask = assetsManager.addBinaryFileTask("music task", "assets/audio/hyperspace.mp3");
+        musicTask.onSuccess = (task) => {
+            // If the game has already started, then autoplay the music
+            this.music = new Sound("music", task.data, this.scene, null, {
+                loop: false,
+                autoplay: this.gameStarted
+            });
+        }
+        
+        // This loads all the assets and displays a loading screen
+        assetsManager.load();
+
+        // This will execute when all assets are loaded
+        assetsManager.onFinish = (tasks) => {
+
+            // Show the debug layer
+            this.scene.debugLayer.show();
+        };  
     }
 
     // The main update loop will be executed once per frame before the scene is rendered
     private update() : void
     {
-        // The distance is the target speed multiplied by the
-        // time elapsed since the last frame update in seconds 
-        var targetMoveDistance = 2 * (this.engine.getDeltaTime() / 1000);
+        // Make sure the game has started and music is playing
+        if(this.gameStarted && this.music?.isPlaying)
+        {
+            // The distance is the target speed multiplied by the
+            // time elapsed since the last frame update in seconds 
+            var targetMoveDistance = 2 * (this.engine.getDeltaTime() / 1000);
 
-        // Translate the target root by the calculated distance
-        this.targetRoot?.translate(Vector3.Backward(), targetMoveDistance);
+            // Translate the target root by the calculated distance
+            this.targetRoot?.translate(Vector3.Backward(), targetMoveDistance);
+        }
     }
+
 }
 /******* End of the Game class ******/   
 
