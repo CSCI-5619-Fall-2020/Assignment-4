@@ -30,7 +30,7 @@ Graded out of 20 points.
 
 4. Spawn new cubes at regular time intervals.  The cubes should be initially placed 10 meters away and fly towards the user at the same speed as the example cube.  They should be placed at random XY positions so that they are reachable with the saber without requiring the user to walk around.  (2)
 
-   *Optionally, you can try to time the cube spawning to the beat of the music!  This part is just for fun, and is not part of the grade.*
+   *Optionally, you can try to time the cube spawning to the beat of the music!  This is just for fun, though, and is not part of the grade.*
 
 5. The sabers should be able to destroy any cube that they hit.  (2)
 
