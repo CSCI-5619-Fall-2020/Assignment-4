@@ -127,6 +127,7 @@ class Game
 
         // This executes when the user enters or exits immersive mode
         xrHelper.enterExitUI.activeButtonChangedObservable.add((enterExit) => {
+            // If we are entering immersive mode
             if(enterExit)
             {
                 // Start the game only in immersive mode
@@ -138,13 +139,16 @@ class Game
                 {
                     this.music.autoplay = true;
                     this.music.play();
-                }            
+                }    
+                     
             }
-            else
+            // This boolean flag is necessary to prevent the pause function
+            // from being executed twice (this may be a bug in the xrHelper)
+            else if(!this.gamePaused)
             {
                 // Pause the game and music upon exit
                 this.gameStarted = false;
-                this.pause();
+                this.pause();  
             }
         });
 
